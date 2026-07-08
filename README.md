@@ -1,12 +1,14 @@
 # PhishLens
 
-An explainable detector for AI-generated spear-phishing emails. PhishLens scores an email from 0–100, gives a verdict, and lists the evidence behind every flag, easing the triaging process.
+An explainable detector for AI-generated spear-phishing emails. PhishLens scores
+an email from 0–100, gives a verdict, and lists the evidence behind every flag —
+so an analyst can triage in seconds instead of guessing.
 
 ## What it does
 
 PhishLens runs an email past a panel of independent checks, each looking for one
 hallmark of an AI-assisted attack, then combines them into a single risk score.
-Every flag comes with an explanation.
+Every flag comes with a plain-language reason; nothing is a black box.
 
 The checks cover:
 
@@ -24,7 +26,9 @@ The checks cover:
   domains, and failed SPF/DKIM/DMARC.
 - **Risky attachments** – macro-enabled documents and disguised executables.
 
-The score escalates when several manipulation tactics stack together, and it flags emails that are personalized, credible, and threatening all at once.
+Two signals go beyond a simple flag count: the score escalates when several
+manipulation tactics stack together, and it flags emails that are personalized,
+credible, and threatening all at once.
 
 ## Requirements
 

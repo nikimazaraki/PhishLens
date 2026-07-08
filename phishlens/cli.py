@@ -1,7 +1,7 @@
 """Command-line interface.
 
-    python -m phishlens.cli email.txt --name Alex --brand Acme
-    cat email.txt | python -m phishlens.cli - --json
+python -m phishlens.cli email.txt --name Alex --brand Acme
+cat email.txt | python -m phishlens.cli - --json
 """
 
 from __future__ import annotations
@@ -44,11 +44,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--spf", help="SPF result (pass/fail/none/...)")
     p.add_argument("--dkim", help="DKIM result")
     p.add_argument("--dmarc", help="DMARC result")
-    p.add_argument("--attach", action="append", default=None,
-                   help="attachment filename (repeatable)")
+    p.add_argument(
+        "--attach",
+        action="append",
+        default=None,
+        help="attachment filename (repeatable)",
+    )
     p.add_argument("--qr", action="store_true", help="email contains a QR code")
-    p.add_argument("--send-hour", type=int, dest="send_hour",
-                   help="hour the email was sent (0-23)")
+    p.add_argument(
+        "--send-hour", type=int, dest="send_hour", help="hour the email was sent (0-23)"
+    )
     p.add_argument("--json", action="store_true", help="emit JSON instead of text")
     args = p.parse_args(argv)
 
@@ -79,8 +84,10 @@ def main(argv: list[str] | None = None) -> int:
 
     color = _COLORS.get(result.verdict, "") if sys.stdout.isatty() else ""
     reset = _RESET if color else ""
-    print(f"\nRisk: {result.risk_score}/100   "
-          f"Verdict: {color}{result.verdict.value.upper()}{reset}\n")
+    print(
+        f"\nRisk: {result.risk_score}/100   "
+        f"Verdict: {color}{result.verdict.value.upper()}{reset}\n"
+    )
     if result.stacked_principles:
         print(f"Stacked principles: {', '.join(sorted(result.stacked_principles))}\n")
     if result.reasons:

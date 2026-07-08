@@ -8,10 +8,35 @@ from ..models import Category, Signal
 from ..text import sentences, words
 
 IMPERATIVE_VERBS = {
-    "click", "verify", "confirm", "update", "login", "log", "sign", "review",
-    "submit", "provide", "enter", "reset", "download", "open", "complete",
-    "validate", "authenticate", "reply", "contact", "call", "visit", "follow",
-    "ensure", "act", "respond", "install", "enable", "authorize", "approve",
+    "click",
+    "verify",
+    "confirm",
+    "update",
+    "login",
+    "log",
+    "sign",
+    "review",
+    "submit",
+    "provide",
+    "enter",
+    "reset",
+    "download",
+    "open",
+    "complete",
+    "validate",
+    "authenticate",
+    "reply",
+    "contact",
+    "call",
+    "visit",
+    "follow",
+    "ensure",
+    "act",
+    "respond",
+    "install",
+    "enable",
+    "authorize",
+    "approve",
 }
 
 
@@ -37,19 +62,28 @@ def _heuristic_score(text: str) -> tuple[float, list[str]]:
     mean_len = sum(lengths) / len(lengths)
     if mean_len > 0 and len(lengths) >= 3:
         variance = sum((x - mean_len) ** 2 for x in lengths) / len(lengths)
-        cv = (variance ** 0.5) / mean_len
+        cv = (variance**0.5) / mean_len
         uniformity = max(0.0, 1 - cv)
     else:
         uniformity = 0.0
 
     lowered = text.lower()
-    sloppy_markers = ["!!", "!!!", " u ", " ur ", "kindly do the needful",
-                      "dear valued customer", "click here immediately!!"]
+    sloppy_markers = [
+        "!!",
+        "!!!",
+        " u ",
+        " ur ",
+        "kindly do the needful",
+        "dear valued customer",
+        "click here immediately!!",
+    ]
     has_sloppiness = any(m in lowered for m in sloppy_markers)
     polish = 0.0 if has_sloppiness else 1.0
 
     if imp_density >= 0.34:
-        evidence.append(f"high imperative-verb density ({imp_density:.0%} of sentences)")
+        evidence.append(
+            f"high imperative-verb density ({imp_density:.0%} of sentences)"
+        )
     if uniformity >= 0.6:
         evidence.append("uniform sentence length ('robotic professionalism')")
     if polish and (imp_density > 0 or uniformity >= 0.5):

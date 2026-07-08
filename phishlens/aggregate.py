@@ -27,15 +27,25 @@ def _complete_con(signals: dict[str, Signal]) -> tuple[float, list[str]]:
     )
 
     vulnerability = max(
-        signals["manipulation"].score if "scarcity" in signals["manipulation"].principles else 0.0,
+        signals["manipulation"].score
+        if "scarcity" in signals["manipulation"].principles
+        else 0.0,
         signals["credential_harvest"].score,
         signals["pretext"].score * 0.8,
     )
 
-    legs = {"relevance": relevance, "credibility": credibility, "vulnerability": vulnerability}
+    legs = {
+        "relevance": relevance,
+        "credibility": credibility,
+        "vulnerability": vulnerability,
+    }
     present = [k for k, v in legs.items() if v >= 0.4]
 
-    triad = (relevance * credibility * vulnerability) ** (1 / 3) if all(legs.values()) else 0.0
+    triad = (
+        (relevance * credibility * vulnerability) ** (1 / 3)
+        if all(legs.values())
+        else 0.0
+    )
 
     notes: list[str] = []
     if len(present) == 3:
@@ -62,7 +72,9 @@ def analyze(text: str, **context) -> AnalysisResult:
     total_weight = sum(s.weight for s in signals) or 1.0
     base = sum(s.score * s.weight for s in signals) / total_weight
 
-    stack_bonus, stack_note = _stacked_persuasion_bonus(by_name["manipulation"].principles)
+    stack_bonus, stack_note = _stacked_persuasion_bonus(
+        by_name["manipulation"].principles
+    )
     triad_score, triad_notes = _complete_con(by_name)
 
     combined = base + stack_bonus + 0.15 * triad_score

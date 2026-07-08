@@ -9,19 +9,28 @@ from phishlens import analyze, Verdict
 from phishlens.detectors.psychology import detect_manipulation
 from phishlens.detectors.authorship import detect_authorship, AuthorshipModel
 from phishlens.detectors.infrastructure import (
-    detect_links, detect_quishing, detect_attachments,
+    detect_links,
+    detect_quishing,
+    detect_attachments,
 )
 from phishlens.detectors.sender import detect_auth, detect_sender, detect_lateral
 
 
 # --- psychology --------------------------------------------------------------
 
+
 def test_manipulation_detects_each_tactic():
     s = detect_manipulation(
         "The IT department requires all employees to act now within 24 hours; "
         "you agreed to our updated terms and we have upgraded your account."
     )
-    assert {"authority", "social_proof", "scarcity", "commitment", "reciprocation"} <= s.principles
+    assert {
+        "authority",
+        "social_proof",
+        "scarcity",
+        "commitment",
+        "reciprocation",
+    } <= s.principles
 
 
 def test_manipulation_empty_on_neutral_text():
@@ -43,6 +52,7 @@ def test_stacked_persuasion_beats_single_principle():
 
 
 # --- authorship (with injectable model) --------------------------------------
+
 
 def test_authorship_heuristic_flags_imperative_uniform_text():
     text = (
@@ -67,6 +77,7 @@ def test_authorship_accepts_injected_model():
 
 # --- infrastructure ----------------------------------------------------------
 
+
 def test_links_flags_ip_and_homograph_and_brand_subdomain():
     ip = detect_links("Log in at http://192.168.10.5/login now")
     assert ip.score >= 0.8
@@ -76,12 +87,16 @@ def test_links_flags_ip_and_homograph_and_brand_subdomain():
 
 
 def test_links_display_href_mismatch():
-    s = detect_links("click here", links=[("https://paypal.com", "https://evil.example/paypal")])
+    s = detect_links(
+        "click here", links=[("https://paypal.com", "https://evil.example/paypal")]
+    )
     assert s.score >= 0.8
 
 
 def test_quishing_no_url_body():
-    s = detect_quishing("Please scan the QR code below to verify your account.", has_qr=True)
+    s = detect_quishing(
+        "Please scan the QR code below to verify your account.", has_qr=True
+    )
     assert s.score >= 0.6
     assert s.evidence
 
@@ -92,6 +107,7 @@ def test_attachments_double_extension():
 
 
 # --- sender ------------------------------------------------------------------
+
 
 def test_auth_dmarc_fail():
     s = detect_auth(headers={"spf": "pass", "dkim": "pass", "dmarc": "fail"})
@@ -117,6 +133,7 @@ def test_lateral_reply_from_freemail():
 
 
 # --- end to end --------------------------------------------------------------
+
 
 def test_benign_message_scores_low():
     r = analyze("Hi team, sharing my notes from the planning session. No rush.")

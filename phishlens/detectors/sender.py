@@ -8,9 +8,21 @@ from ..models import Category, Signal
 from ..text import normalize
 
 FREE_MAIL = {
-    "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "outlook.com",
-    "hotmail.com", "live.com", "aol.com", "protonmail.com", "proton.me",
-    "icloud.com", "mail.com", "gmx.com", "yandex.com", "zoho.com",
+    "gmail.com",
+    "googlemail.com",
+    "yahoo.com",
+    "yahoo.co.uk",
+    "outlook.com",
+    "hotmail.com",
+    "live.com",
+    "aol.com",
+    "protonmail.com",
+    "proton.me",
+    "icloud.com",
+    "mail.com",
+    "gmx.com",
+    "yandex.com",
+    "zoho.com",
 }
 
 _ADDR_RE = re.compile(r"<?([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})>?")
@@ -33,8 +45,12 @@ def _parse_from(from_header: str) -> tuple[str, str, str]:
 def detect_auth(text: str | None = None, headers: dict | None = None, **_) -> Signal:
     if not headers:
         return Signal(
-            name="auth", category=Category.SENDER, score=0.0, weight=0.20,
-            technique="Sender authentication failure (SPF/DKIM/DMARC)", evidence=[],
+            name="auth",
+            category=Category.SENDER,
+            score=0.0,
+            weight=0.20,
+            technique="Sender authentication failure (SPF/DKIM/DMARC)",
+            evidence=[],
         )
     evidence: list[str] = []
     score = 0.0
@@ -44,8 +60,12 @@ def detect_auth(text: str | None = None, headers: dict | None = None, **_) -> Si
             evidence.append(f"{mech.upper()} = {val}")
             score = max(score, 0.75 if mech == "dmarc" else 0.6)
     return Signal(
-        name="auth", category=Category.SENDER, score=score, weight=0.20,
-        technique="Sender authentication failure (SPF/DKIM/DMARC)", evidence=evidence,
+        name="auth",
+        category=Category.SENDER,
+        score=score,
+        weight=0.20,
+        technique="Sender authentication failure (SPF/DKIM/DMARC)",
+        evidence=evidence,
     )
 
 
@@ -71,8 +91,12 @@ def detect_sender(
 ) -> Signal:
     if not from_header:
         return Signal(
-            name="sender", category=Category.SENDER, score=0.0, weight=0.18,
-            technique="Sender spoofing / brand impersonation", evidence=[],
+            name="sender",
+            category=Category.SENDER,
+            score=0.0,
+            weight=0.18,
+            technique="Sender spoofing / brand impersonation",
+            evidence=[],
         )
 
     display, email, domain = _parse_from(from_header)
@@ -82,11 +106,23 @@ def detect_sender(
     if domain in FREE_MAIL and display:
         looks_corporate = any(
             k in display.lower()
-            for k in ["support", "it", "team", "security", "admin", "hr",
-                      "service", "notification", "no-reply", "help"]
+            for k in [
+                "support",
+                "it",
+                "team",
+                "security",
+                "admin",
+                "hr",
+                "service",
+                "notification",
+                "no-reply",
+                "help",
+            ]
         ) or (claimed_brand and claimed_brand.lower() in display.lower())
         if looks_corporate:
-            evidence.append(f'corporate display name "{display}" from free-mail ({domain})')
+            evidence.append(
+                f'corporate display name "{display}" from free-mail ({domain})'
+            )
             score = max(score, 0.75)
 
     if _lookalike(domain, claimed_brand):
@@ -96,12 +132,18 @@ def detect_sender(
     if claimed_brand:
         b = claimed_brand.lower().replace(" ", "")
         if b in normalize(text) and domain and b not in domain:
-            evidence.append(f'body invokes "{claimed_brand}" but sender domain is {domain}')
+            evidence.append(
+                f'body invokes "{claimed_brand}" but sender domain is {domain}'
+            )
             score = max(score, 0.6)
 
     return Signal(
-        name="sender", category=Category.SENDER, score=score, weight=0.18,
-        technique="Sender spoofing / lookalike domain", evidence=evidence,
+        name="sender",
+        category=Category.SENDER,
+        score=score,
+        weight=0.18,
+        technique="Sender spoofing / lookalike domain",
+        evidence=evidence,
     )
 
 
@@ -112,16 +154,20 @@ def detect_lateral(
     claimed_brand: str | None = None,
     **_,
 ) -> Signal:
-    _, _, domain = _parse_from(from_header or "")
+    _display, _email, domain = _parse_from(from_header or "")
     norm = normalize(text)
     evidence: list[str] = []
     score = 0.0
 
-    is_reply = bool(subject) and re.match(r"\s*(re|fwd?)\s*:", subject, re.IGNORECASE)
+    is_reply = bool(subject and re.match(r"\s*(re|fwd?)\s*:", subject, re.IGNORECASE))
     internal_cues = [
-        "as we discussed", "per our thread", "following up on our",
-        "as per our conversation", "the document i mentioned",
-        "as agreed in our call", "continuing our thread",
+        "as we discussed",
+        "per our thread",
+        "following up on our",
+        "as per our conversation",
+        "the document i mentioned",
+        "as agreed in our call",
+        "continuing our thread",
     ]
     has_internal_cue = any(c in norm for c in internal_cues)
 
@@ -133,21 +179,35 @@ def detect_lateral(
         score = max(score, 0.65)
 
     return Signal(
-        name="lateral", category=Category.SENDER, score=score, weight=0.14,
-        technique="Thread hijacking / lateral phishing", evidence=evidence,
+        name="lateral",
+        category=Category.SENDER,
+        score=score,
+        weight=0.14,
+        technique="Thread hijacking / lateral phishing",
+        evidence=evidence,
     )
 
 
-def detect_temporal(text: str | None = None, send_hour: int | None = None, **_) -> Signal:
+def detect_temporal(
+    text: str | None = None, send_hour: int | None = None, **_
+) -> Signal:
     if send_hour is None:
         return Signal(
-            name="temporal", category=Category.SENDER, score=0.0, weight=0.05,
-            technique="Send-time optimization", evidence=[],
+            name="temporal",
+            category=Category.SENDER,
+            score=0.0,
+            weight=0.05,
+            technique="Send-time optimization",
+            evidence=[],
         )
     in_window = 9 <= int(send_hour) < 11
     return Signal(
-        name="temporal", category=Category.SENDER,
-        score=0.3 if in_window else 0.0, weight=0.05,
+        name="temporal",
+        category=Category.SENDER,
+        score=0.3 if in_window else 0.0,
+        weight=0.05,
         technique="Send-time optimization",
-        evidence=["sent in the 09:00-11:00 cognitive-triage window"] if in_window else [],
+        evidence=["sent in the 09:00-11:00 cognitive-triage window"]
+        if in_window
+        else [],
     )

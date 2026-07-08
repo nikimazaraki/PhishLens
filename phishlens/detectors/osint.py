@@ -28,16 +28,23 @@ def detect_personalization(
         evidence.append(f'references employer ("{recipient_employer}")')
 
     osint_cues = [
-        "your recent", "your paper", "your project", "your team",
-        "as the new", "in your department", "on your linkedin",
-        "your presentation", "your role as", "since you joined",
+        "your recent",
+        "your paper",
+        "your project",
+        "your team",
+        "as the new",
+        "in your department",
+        "on your linkedin",
+        "your presentation",
+        "your role as",
+        "since you joined",
     ]
     cue_matches = [c for c in osint_cues if c in norm]
     if cue_matches:
         hits += 1
         evidence.append(f'context-specific references: "{cue_matches[0]}"')
 
-    score = 0.0 if hits == 0 else min(0.95, 1 - 0.5 ** hits)
+    score = 0.0 if hits == 0 else min(0.95, 1 - 0.5**hits)
 
     return Signal(
         name="personalization",
