@@ -96,6 +96,27 @@ test and the system is hard to fool with any single trick. The AI-writing detect
 sits behind a clean interface, so a machine-learning model can replace the
 rule-based scorer without touching anything else.
 
+## Benchmark
+
+PhishLens was evaluated on an untouched HELD-OUT subset of the English
+E-PhishLLM dataset.
+
+Using a threshold selected exclusively on a separate DEV split:
+
+| Metric | Result |
+|---|---:|
+| Precision | 92.37% |
+| Recall | 44.41% |
+| F1 | 59.98% |
+| False-positive rate | 4.00% |
+| Balanced accuracy | 70.21% |
+
+The results show a conservative operating profile: high precision and a low
+false-positive rate, with limited recall.
+
+Full methodology and results are available in
+[`evaluation/README.md`](evaluation/README.md).
+
 ## Disclaimer
 
 Defensive tooling only. PhishLens analyzes emails for risk; it does not generate,

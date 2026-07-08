@@ -73,6 +73,7 @@ VERDICT_ORDER = ["benign", "suspicious", "likely_phishing", "high_risk"]
 # Load and split
 # ---------------------------------------------------------------------------
 
+
 def _gold(record: dict[str, Any]) -> int:
     """Convert the dataset label to 0 = legitimate, 1 = phishing."""
     raw = str(record.get("type", "")).strip().lower()
@@ -98,8 +99,7 @@ def load_records(path: Path, language: str) -> list[dict[str, Any]]:
     return [
         record
         for record in rows
-        if str(record.get("Subject", "")).strip()
-        or str(record.get("Body", "")).strip()
+        if str(record.get("Subject", "")).strip() or str(record.get("Body", "")).strip()
     ]
 
 
@@ -143,6 +143,7 @@ def stratified_split(
 # Scoring
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Scored:
     gold: int
@@ -175,9 +176,7 @@ def score_records(
                 Scored(
                     gold=_gold(record),
                     score=float(result.risk_score),
-                    verdict=str(
-                        getattr(result.verdict, "value", result.verdict)
-                    ),
+                    verdict=str(getattr(result.verdict, "value", result.verdict)),
                     language=str(record.get("Language", "")),
                     subject=subject,
                     body=body,
@@ -207,10 +206,7 @@ def predict(
 ) -> list[int]:
     """Convert PhishLens output into binary predictions."""
     if decision == "verdict":
-        return [
-            1 if item.verdict in PHISHING_VERDICTS else 0
-            for item in scored
-        ]
+        return [1 if item.verdict in PHISHING_VERDICTS else 0 for item in scored]
 
     return [1 if item.score >= threshold else 0 for item in scored]
 
@@ -218,6 +214,7 @@ def predict(
 # ---------------------------------------------------------------------------
 # Metrics
 # ---------------------------------------------------------------------------
+
 
 def _safe_div(a: float, b: float) -> float:
     return a / b if b else 0.0
@@ -271,6 +268,7 @@ def compute_metrics(
 # Reporting helpers
 # ---------------------------------------------------------------------------
 
+
 def _percentiles(
     values: list[float],
     ps: tuple[int, ...],
@@ -286,9 +284,8 @@ def _percentiles(
         lo = int(k)
         hi = min(lo + 1, len(sorted_values) - 1)
 
-        output[p] = (
-            sorted_values[lo]
-            + (sorted_values[hi] - sorted_values[lo]) * (k - lo)
+        output[p] = sorted_values[lo] + (sorted_values[hi] - sorted_values[lo]) * (
+            k - lo
         )
 
     return output
@@ -309,10 +306,7 @@ def print_score_distribution(scored: list[Scored]) -> None:
 
         pct = _percentiles(values, (10, 25, 50, 75, 90))
 
-        print(
-            f"\n  {label}  n={len(values)}  "
-            f"mean={statistics.mean(values):.1f}"
-        )
+        print(f"\n  {label}  n={len(values)}  mean={statistics.mean(values):.1f}")
 
         print(
             f"    p10={pct[10]:.0f}  "
@@ -332,10 +326,7 @@ def print_score_distribution(scored: list[Scored]) -> None:
         for bucket in range(10):
             bar = "#" * int(40 * bins[bucket] / peak)
 
-            print(
-                f"    {bucket * 10:>3}-{bucket * 10 + 9:<3} "
-                f"{bins[bucket]:>6} |{bar}"
-            )
+            print(f"    {bucket * 10:>3}-{bucket * 10 + 9:<3} {bins[bucket]:>6} |{bar}")
 
 
 def print_verdict_distribution(scored: list[Scored]) -> None:
@@ -344,23 +335,12 @@ def print_verdict_distribution(scored: list[Scored]) -> None:
 
     for verdict in VERDICT_ORDER:
         phishing = sum(
-            1
-            for item in scored
-            if item.verdict == verdict and item.gold == 1
+            1 for item in scored if item.verdict == verdict and item.gold == 1
         )
 
-        legit = sum(
-            1
-            for item in scored
-            if item.verdict == verdict and item.gold == 0
-        )
+        legit = sum(1 for item in scored if item.verdict == verdict and item.gold == 0)
 
-        print(
-            f"  {verdict:<16} "
-            f"{phishing:>9} "
-            f"{legit:>9} "
-            f"{phishing + legit:>9}"
-        )
+        print(f"  {verdict:<16} {phishing:>9} {legit:>9} {phishing + legit:>9}")
 
 
 def print_confusion_and_metrics(
@@ -410,10 +390,7 @@ def sweep_thresholds(
     threshold = 0.0
 
     while threshold <= 100.0 + 1e-9:
-        pred = [
-            1 if item.score >= threshold else 0
-            for item in scored
-        ]
+        pred = [1 if item.score >= threshold else 0 for item in scored]
 
         tp, tn, fp, fn = confusion(gold, pred)
         metrics = compute_metrics(tp, tn, fp, fn)
@@ -436,11 +413,7 @@ def sweep_thresholds(
 
     best_f1 = max(rows, key=lambda row: row["f1"])
 
-    eligible = [
-        row
-        for row in rows
-        if row["fpr"] <= max_fpr
-    ]
+    eligible = [row for row in rows if row["fpr"] <= max_fpr]
 
     if eligible:
         recommended = max(
@@ -455,10 +428,7 @@ def sweep_thresholds(
         recommended = best_f1
 
     print("\n--- threshold sweep on DEV ---")
-    print(
-        "    thr     TP    FN    FP    TN"
-        "   prec    rec    f1     fpr"
-    )
+    print("    thr     TP    FN    FP    TN   prec    rec    f1     fpr")
 
     for row in rows:
         marks: list[str] = []
@@ -533,17 +503,9 @@ def inspect_errors(
         print(f"\n--- {title} (showing up to {k} of {len(items)}) ---")
 
         for item, score in items[:k]:
-            top_reason = (
-                item.reasons[0]
-                if item.reasons
-                else "(no reasons emitted)"
-            )
+            top_reason = item.reasons[0] if item.reasons else "(no reasons emitted)"
 
-            print(
-                f"  score={score:>5.1f} "
-                f"[{item.verdict:<14}] "
-                f"{item.subject[:90]!r}"
-            )
+            print(f"  score={score:>5.1f} [{item.verdict:<14}] {item.subject[:90]!r}")
             print(f"      why: {top_reason}")
 
     _show("FALSE POSITIVES  (legit flagged as phishing)", fps)
@@ -587,6 +549,7 @@ def inspect_errors(
 # ---------------------------------------------------------------------------
 # Optional plots
 # ---------------------------------------------------------------------------
+
 
 def save_plots(
     scored: list[Scored],
@@ -706,6 +669,7 @@ def save_predictions(
 # ---------------------------------------------------------------------------
 # Evaluation phases
 # ---------------------------------------------------------------------------
+
 
 def run_dev(
     dev: list[dict[str, Any]],
@@ -828,10 +792,7 @@ def run_confirm(
     )
 
     print(f"\n{'=' * 70}")
-    print(
-        f"  HELD-OUT CONFIRMATION  "
-        f"({len(held)} emails, language={args.language})"
-    )
+    print(f"  HELD-OUT CONFIRMATION  ({len(held)} emails, language={args.language})")
     print(f"  Operating point: {operating_point}")
     print("  >>> This is your single held-out evaluation. Report these numbers. <<<")
     print(f"{'=' * 70}")
@@ -876,6 +837,7 @@ def run_confirm(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
@@ -993,10 +955,7 @@ def main(argv: list[str] | None = None) -> int:
     records = load_records(path, args.language)
 
     if not records:
-        sys.exit(
-            f"No records for language={args.language!r}. "
-            "Try --language all."
-        )
+        sys.exit(f"No records for language={args.language!r}. Try --language all.")
 
     dev, held = stratified_split(
         records,
