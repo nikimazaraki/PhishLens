@@ -1,0 +1,23 @@
+[project]
+name = "phishlens"
+version = "0.2.0"
+description = "Explainable detector for AI-assisted spear-phishing — defensive inversion of an MSc thesis on LLM-enabled OSINT phishing."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = []
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2"]
+test = ["pytest>=8"]
+dev = ["phishlens[api,test]", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+phishlens = "phishlens.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["phishlens*"]
