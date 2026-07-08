@@ -26,3 +26,9 @@ htmlcov/
 # Type checker / linter caches
 .mypy_cache/
 .ruff_cache/
+
+# Benchmark datasets
+datasets/
+
+# Evaluation
+evaluation/results/
