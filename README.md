@@ -1,140 +1,64 @@
 # PhishLens
 
-An explainable detector for AI-generated spear-phishing emails. It scores an
-email for the fingerprints of a modern, AI-assisted phishing attack and explains
-*why* it's suspicious in plain language, so a security analyst can triage in
-seconds instead of guessing.
+An explainable detector for AI-generated spear-phishing emails. PhishLens scores an email from 0–100, gives a verdict, and lists the evidence behind every flag, easing the triaging process.
 
-## What this project does
+## What it does
 
-PhishLens reads an email and runs it past a panel of independent checks, each
-looking for one hallmark of an AI-assisted attack. It returns a single 0–100
-risk score, a verdict, and — most importantly — the evidence behind every flag.
-Nothing is a black box.
+PhishLens runs an email past a panel of independent checks, each looking for one
+hallmark of an AI-assisted attack, then combines them into a single risk score.
+Every flag comes with an explanation.
 
 The checks cover:
 
-- **Manipulation tactics** — the six classic persuasion levers (authority,
-  urgency, social proof, reciprocation, commitment, liking) phishing uses to
-  short-circuit critical thinking.
-- **Personalization** — whether the email knows the recipient's name, role, or
-  employer: the tell of a researched, targeted attack rather than mass spam.
-- **AI-written prose** — machine-generated lures read as unusually clean,
-  uniform, and command-heavy ("robotic professionalism"). This flips the old
-  rule: suspiciously *polished* text is now a red flag.
-- **Pretext** — the scenarios attackers fabricate most: fake password/MFA
-  resets, bonus and tax-refund bait, invoice and payment fraud.
-- **Deceptive links** — lookalike domains, homograph tricks, URL shorteners,
-  brand names buried in unrelated domains, and link text that points elsewhere.
-- **Fake login prompts** — "Sign in with Microsoft/Google" credential-harvest
-  pop-ups, and QR codes used to dodge link scanners.
-- **Sender & authentication** — brand names sent from free Gmail accounts,
-  typosquatted domains, failed SPF/DKIM/DMARC, and hijacked reply threads.
-- **Risky attachments** — macro-enabled documents, disguised executables, and
-  double-extension tricks.
+- **Manipulation tactics** – authority, urgency, social proof, reciprocation,
+  commitment, and liking.
+- **Personalization** – whether the email targets the recipient by name, role,
+  or employer.
+- **AI-written prose** – unusually clean, uniform, command-heavy text.
+- **Pretext** – common lures: fake password/MFA resets, bonus or refund bait,
+  invoice fraud.
+- **Deceptive links** – lookalike domains, homographs, shorteners, and link text
+  that points elsewhere.
+- **Fake login prompts** – "Sign in with…" credential-harvest pages and QR codes.
+- **Sender & authentication** – brand names sent from free webmail, typosquatted
+  domains, and failed SPF/DKIM/DMARC.
+- **Risky attachments** – macro-enabled documents and disguised executables.
 
-Two things set it apart from a simple red-flag counter:
+The score escalates when several manipulation tactics stack together, and it flags emails that are personalized, credible, and threatening all at once.
 
-1. **It escalates when tactics stack.** An email combining several manipulation
-   levers is far more dangerous than one using a single lever — the pressure
-   compounds. PhishLens raises risk sharply when tactics appear together.
-2. **It recognizes a complete con.** The most effective lures are *relevant*
-   (personalized), *credible* (look legitimate), and *threatening* (demand
-   urgent action) all at once. PhishLens specifically flags emails where all
-   three converge.
+## Requirements
 
-## Why I built it
+Python 3.10+, standard library only. FastAPI is an optional extra for the HTTP
+wrapper; pytest is used for the tests.
 
-Old phishing was easy to catch: typos, bad grammar, obviously fake links.
-Simple keyword and blacklist filters handled it.
-
-AI broke that. Attackers now use large language models to write clean, fluent,
-hyper-personalized emails at scale — each one unique, each tailored to the
-target using public information scraped from LinkedIn and company sites. These
-sail past traditional filters because there's no typo to catch and no reused
-template to blacklist. AI-generated lures now bypass commercial spam filters the
-large majority of the time and hit click-through rates rivaling human red teams.
-
-PhishLens is the defensive counterpart to my MSc thesis, which studied exactly
-how that offensive pipeline works. The thesis showed how the attack is built;
-this tool detects it.
-
-## Tech stack
-
-- **Python 3.10+**, standard library only — the core has zero third-party
-  dependencies and runs anywhere.
-- **pytest** for the test suite.
-- **GitHub Actions** for CI (tests run on Python 3.10 and 3.12 on every push).
-- Optional **FastAPI** wrapper for exposing the analyzer as an HTTP endpoint.
-
-## Architecture / workflow
-
-```mermaid
-flowchart TD
-    A[Email text + optional metadata] --> B
-
-    subgraph B [Panel of independent detectors]
-        direction LR
-        B1[Manipulation<br/>tactics]
-        B2[Personalization]
-        B3[AI-written<br/>prose]
-        B4[Pretext]
-        B5[Deceptive<br/>links]
-        B6[Fake login /<br/>QR]
-        B7[Sender &<br/>auth]
-        B8[Attachments]
-    end
-
-    B -->|score + evidence per check| C
-
-    subgraph C [Scoring engine]
-        direction TB
-        C1[Weighted ensemble]
-        C2[+ stacked-tactic escalation]
-        C3[+ complete-con signal]
-        C1 --> C2 --> C3
-    end
-
-    C --> D[Risk score 0–100 · verdict · ranked reasons]
-```
-
-Every check is a small function that scores one signal and returns its evidence.
-A scoring engine combines them into a weighted risk rating, then layers on the
-two cross-cutting signals (stacked tactics, complete con). Because the detectors
-are independent, each is trivially unit-tested and the system is hard to fool
-with any single trick — an ensemble of diverse checks is more robust than one
-monolithic classifier. The AI-writing detector sits behind a clean interface, so
-a heavier machine-learning model can replace the rule-based scorer without
-touching anything else.
-
-## How to run it
+## Usage
 
 ```bash
-# analyze an email file, passing what you know as flags
+# Analyze an email file, passing known details as flags
 python -m phishlens.cli examples/spear_phish.txt \
-  --name Niki --role analyst --employer Deloitte --brand Microsoft \
+  --name Alex --role analyst --employer "Acme Corp" --brand DocuSign \
   --from '"IT Support" <it-support@gmail.com>' --dmarc fail
 
-# pipe from stdin and get JSON
+# Pipe from stdin and get JSON
 cat email.txt | python -m phishlens.cli - --json
 ```
 
-Or call it directly from Python:
+From Python:
 
 ```python
 from phishlens import analyze
 
 result = analyze(
-    "Hi Niki, the IT department requires all employees to verify your account "
-    "within 24 hours to avoid suspension. Sign in with Microsoft: "
-    "https://microsoft.login-verify.ru/sso",
+    "Hi Alex, the IT department requires all employees to verify your account "
+    "within 24 hours to avoid suspension. Log in to confirm: "
+    "https://docusign.login-verify.ru/sso",
     from_header='"IT Support" <it-support@gmail.com>',
-    claimed_brand="Microsoft",
-    recipient_name="Niki",
+    claimed_brand="DocuSign",
+    recipient_name="Alex",
     headers={"spf": "softfail", "dmarc": "fail"},
 )
 
-print(result.risk_score, result.verdict.value)   # 95.7 high_risk
+print(result.risk_score, result.verdict.value)
 for reason in result.reasons:
     print(" -", reason)
 ```
@@ -144,46 +68,31 @@ Run the tests with `pip install pytest && pytest -q`.
 ## Example output
 
 ```
-Risk: 95.7/100   Verdict: HIGH_RISK
+Risk: 82.5/100   Verdict: HIGH_RISK
 
 Why:
-  - stacked persuasion: 5 manipulation tactics combined (authority, liking,
-    reciprocation, scarcity, social proof) — layered pressure raises click risk
+  - stacked persuasion: 3 manipulation tactics combined (authority, scarcity, social_proof)
   - complete con: relevant + credible + threatening all present
-  - link: brand "microsoft" hidden in subdomain of unrelated host
-    (microsoft.login-verify.ru)
-  - credential harvest: fake "Sign in with Microsoft" prompt
-  - sender: corporate display name "IT Support" sent from a free Gmail address
-  - authentication: DMARC failed
-  - personalization: addresses recipient by name, role, and employer
+  - [links] brand "docusign" in subdomain of unrelated host (docusign.login-verify.ru)
+  - [sender] corporate display name "IT Support" from free-mail (gmail.com)
+  - [auth] DMARC = fail
+  - [credential_harvest] credential-request language: "log in to confirm"
+  - [pretext] it security reset pretext: "verify your account"
+  - [personalization] addresses recipient by name ("Alex")
 ```
 
-A benign message, by contrast, scores in the single digits and returns a
-`BENIGN` verdict with no flags.
+A benign message scores in the single digits with a `BENIGN` verdict.
 
-## What I learned
+## Design
 
-- **Detecting an attack is harder than describing it.** Inverting my thesis from
-  "here's how the attack works" into "here's how to catch it" forced far more
-  precision — a vague description doesn't compile.
-- **The old rules invert under AI.** Clean grammar used to mean "legitimate."
-  Against LLM-written lures, polish is now a signal *for* suspicion, not against.
-- **Explainability is a feature, not a nicety.** An analyst won't trust a score
-  they can't interrogate, so every check earns its output by showing evidence.
-- **Independent, composable checks beat one big classifier** — easier to test,
-  easier to reason about, and harder to defeat with a single evasion.
-
-## Possible improvements
-
-- Add an `.eml` parser so raw mailbox exports flow through the metadata-dependent
-  checks end-to-end, instead of passing details as flags.
-- Swap the rule-based AI-writing detector for a machine-learning model behind the
-  existing interface.
-- Evaluate against a labeled public phishing corpus to report precision/recall,
-  turning "I built a detector" into "I measured one."
-- Extend the keyword banks beyond English.
+Each check is a small, independent function that scores one signal and returns
+its evidence. A scoring engine combines them into a weighted risk rating and adds
+the two cross-cutting signals. Because the checks are independent, each is easy to
+test and the system is hard to fool with any single trick. The AI-writing detector
+sits behind a clean interface, so a machine-learning model can replace the
+rule-based scorer without touching anything else.
 
 ## Disclaimer
 
-Defensive tooling only. PhishLens analyzes emails for risk; it does not
-generate, send, or facilitate phishing.
+Defensive tooling only. PhishLens analyzes emails for risk; it does not generate,
+send, or facilitate phishing.

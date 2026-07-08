@@ -1,10 +1,4 @@
-"""Detector registry.
-
-Each detector is an independent callable with the signature
-`detector(text, **context) -> Signal`. Keeping them independent and uniformly
-shaped is what lets the scoring engine treat them as an ensemble.
-The `**context` bag means a detector simply ignores any inputs it does not use.
-"""
+"""Detector registry."""
 
 from .authorship import detect_authorship
 from .infrastructure import (
@@ -23,7 +17,6 @@ from .sender import (
     detect_temporal,
 )
 
-# Order is cosmetic; it reads top-down from psychology to delivery-layer checks.
 DETECTORS = [
     detect_manipulation,
     detect_personalization,

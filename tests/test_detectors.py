@@ -1,8 +1,8 @@
 """Tests for PhishLens detectors and the ensemble.
 
-Each detector is independently testable by design. These tests
-also lock in the two cross-signal behaviors that make the tool a faithful
-cross-signal behaviors: stacked persuasion and the complete-con signal.
+Each detector is independently testable by design. These tests also lock in
+the two cross-signal behaviors that make the tool more than a red-flag counter:
+stacked persuasion and the complete-con signal.
 """
 
 from phishlens import analyze, Verdict
@@ -71,7 +71,7 @@ def test_links_flags_ip_and_homograph_and_brand_subdomain():
     ip = detect_links("Log in at http://192.168.10.5/login now")
     assert ip.score >= 0.8
 
-    brand = detect_links("Go to https://microsoft.secure-login.ru/sso")
+    brand = detect_links("Go to https://docusign.secure-login.ru/sso")
     assert any("subdomain" in e for e in brand.evidence)
 
 
@@ -126,15 +126,15 @@ def test_benign_message_scores_low():
 
 def test_full_spear_phish_high_risk():
     r = analyze(
-        "Hi Niki, as the new analyst at Deloitte, the IT department requires "
+        "Hi Alex, as the new analyst at Acme Corp, the IT department requires "
         "all employees to verify your account within 24 hours to avoid "
-        "suspension. Sign in with Microsoft here: "
-        "https://microsoft.login-verify.ru/sso",
+        "suspension. Log in to confirm here: "
+        "https://docusign.login-verify.ru/sso",
         from_header='"IT Support" <it-support@gmail.com>',
-        claimed_brand="Microsoft",
-        recipient_name="Niki",
+        claimed_brand="DocuSign",
+        recipient_name="Alex",
         recipient_role="analyst",
-        recipient_employer="Deloitte",
+        recipient_employer="Acme Corp",
         headers={"spf": "softfail", "dkim": "fail", "dmarc": "fail"},
     )
     assert r.verdict == Verdict.HIGH_RISK

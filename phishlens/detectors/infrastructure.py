@@ -1,13 +1,4 @@
-"""Malicious infrastructure and delivery-artifact detectors.
-
-Four independent checks on how an attack tries to reach and trap the victim:
-  - links:        URL structure analysis - homographs, deceptive subdomains,
-                  brand-in-path, shorteners, IP literals, display-vs-href
-                  mismatch.
-  - credential:   fake login / OAuth-popup ("Sign in with Microsoft") language.
-  - quishing:     QR-code delivery that dodges URL scanners.
-  - attachments:  documents with macros/embedded scripts, disguised executables.
-"""
+"""Malicious infrastructure and delivery-artifact detectors."""
 
 from __future__ import annotations
 
@@ -16,14 +7,11 @@ import re
 from ..models import Category, Signal
 from ..text import extract_urls, normalize
 
-# --- link / URL analysis -----------------------------------------------------
-
 SHORTENERS = {
     "bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly", "is.gd", "buff.ly",
     "rebrand.ly", "cutt.ly", "rb.gy", "shorturl.at", "tiny.cc",
 }
 
-# Brand tokens commonly impersonated; used for brand-in-subdomain/path tells.
 BRAND_TOKENS = {
     "microsoft", "office365", "office", "outlook", "google", "gmail", "apple",
     "icloud", "amazon", "aws", "paypal", "netflix", "meta", "facebook",
@@ -35,12 +23,11 @@ PUNYCODE_RE = re.compile(r"xn--", re.IGNORECASE)
 
 
 def _host_of(url: str) -> str:
-    u = re.sub(r"^\w+://", "", url)          # strip scheme
+    u = re.sub(r"^\w+://", "", url)
     return u.split("/")[0].split("?")[0].lower()
 
 
 def _has_mixed_scripts(host: str) -> bool:
-    """Homograph tell: a hostname mixing ASCII letters with non-ASCII letters."""
     has_ascii = any("a" <= c <= "z" for c in host)
     has_non_ascii = any(ord(c) > 127 and c.isalpha() for c in host)
     return has_ascii and has_non_ascii
@@ -48,11 +35,9 @@ def _has_mixed_scripts(host: str) -> bool:
 
 def detect_links(
     text: str,
-    links: list[tuple[str, str]] | None = None,  # (display_text, href) pairs
+    links: list[tuple[str, str]] | None = None,
     **_,
 ) -> Signal:
-    """Analyze link structure, not just domain reputation - deceptive URLs can
-    be caught before any blacklist flags the domain."""
     evidence: list[str] = []
     score = 0.0
 
@@ -74,8 +59,6 @@ def detect_links(
             evidence.append(f"URL shortener hides destination ({host})")
             score = max(score, 0.6)
 
-        # Brand-in-subdomain / brand-in-path but not the registrable domain:
-        # e.g. microsoft.login-verify.ru or secure.com/microsoft/login
         labels = host.split(".")
         registrable = ".".join(labels[-2:]) if len(labels) >= 2 else host
         for brand in BRAND_TOKENS:
@@ -88,8 +71,6 @@ def detect_links(
                 score = max(score, 0.6)
                 break
 
-    # Display-vs-href mismatch: the classic "text says one domain, link goes
-    # elsewhere" tell, available when structured links are supplied.
     for display, href in links or []:
         d_urls = extract_urls(display)
         if d_urls:
@@ -109,10 +90,7 @@ def detect_links(
     )
 
 
-# --- Browser-in-the-Browser / credential harvest -----------------------------
-
 def detect_credential_harvest(text: str, **_) -> Signal:
-    """Fake-login / OAuth-popup lures (browser-in-the-browser style)."""
     norm = normalize(text)
     cues = [
         "sign in with microsoft", "sign in with google", "sign in with your",
@@ -134,16 +112,12 @@ def detect_credential_harvest(text: str, **_) -> Signal:
     )
 
 
-# --- Quishing (QR-code phishing) ---------------------------------------------
-
 def detect_quishing(
     text: str,
     has_qr: bool | None = None,
     attachments: list[str] | None = None,
     **_,
 ) -> Signal:
-    """QR delivery avoids suspicious URLs in the body and pushes the victim to a
-    less-defended mobile device."""
     norm = normalize(text)
     evidence: list[str] = []
     score = 0.0
@@ -156,7 +130,6 @@ def detect_quishing(
     if qr_image or qr_mentioned:
         evidence.append("QR-code call to action (bypasses URL scanners, shifts to mobile)")
         score = 0.6
-        # A QR ask with no visible URL in the body is the textbook evasion combo.
         if not extract_urls(text):
             evidence.append("no in-body URL — interaction pushed entirely to the QR code")
             score = 0.72
@@ -171,21 +144,18 @@ def detect_quishing(
     )
 
 
-# --- Malicious attachments ---------------------------------------------------
-
 RISKY_EXT = {
-    ".docm", ".xlsm", ".pptm",           # macro-enabled Office
-    ".htm", ".html",                     # HTML smuggling / fake login pages
-    ".iso", ".img", ".vhd",              # container evasion
-    ".js", ".vbs", ".hta", ".scr",       # direct script/executable
-    ".zip", ".rar", ".7z",               # archives hiding the above
-    ".lnk",                              # shortcut payloads
+    ".docm", ".xlsm", ".pptm",
+    ".htm", ".html",
+    ".iso", ".img", ".vhd",
+    ".js", ".vbs", ".hta", ".scr",
+    ".zip", ".rar", ".7z",
+    ".lnk",
 }
 DOC_EXT = {".pdf", ".doc", ".docx", ".xls", ".xlsx"}
 
 
 def detect_attachments(text: str, attachments: list[str] | None = None, **_) -> Signal:
-    """Documents that may carry embedded scripts/links, or disguised executables."""
     if not attachments:
         return Signal(
             name="attachments", category=Category.INFRASTRUCTURE, score=0.0,
@@ -203,7 +173,6 @@ def detect_attachments(text: str, attachments: list[str] | None = None, **_) -> 
         elif ext in DOC_EXT:
             evidence.append(f"document attachment — potential embedded link/script ({name})")
             score = max(score, 0.4)
-        # Double-extension trick, e.g. invoice.pdf.exe
         if re.search(r"\.(pdf|docx?|xlsx?|jpg|png)\.[a-z0-9]{2,4}$", lower):
             evidence.append(f"double-extension disguise ({name})")
             score = max(score, 0.9)

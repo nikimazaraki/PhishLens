@@ -1,6 +1,6 @@
 """Command-line interface.
 
-    python -m phishlens.cli email.txt --name Niki --brand Deloitte
+    python -m phishlens.cli email.txt --name Alex --brand Acme
     cat email.txt | python -m phishlens.cli - --json
 """
 
@@ -14,10 +14,10 @@ from .aggregate import analyze
 from .models import Verdict
 
 _COLORS = {
-    Verdict.BENIGN: "\033[92m",         # green
-    Verdict.SUSPICIOUS: "\033[93m",     # yellow
-    Verdict.LIKELY_PHISHING: "\033[91m",  # red
-    Verdict.HIGH_RISK: "\033[1;91m",    # bold red
+    Verdict.BENIGN: "\033[92m",
+    Verdict.SUSPICIOUS: "\033[93m",
+    Verdict.LIKELY_PHISHING: "\033[91m",
+    Verdict.HIGH_RISK: "\033[1;91m",
 }
 _RESET = "\033[0m"
 

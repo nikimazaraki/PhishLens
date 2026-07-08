@@ -1,11 +1,4 @@
-"""Fabricated-scenario / pretext detector.
-
-Recognizes the cover stories AI phishing fabricates most often: IT-security
-notifications that mimic mandatory MFA / password resets, financial-incentive
-bait about bonuses or tax refunds, invoice / payment-fraud pretexts, and
-parcel-delivery scams. Detecting the pretext archetype adds a categorical
-signal on top of the atomic cues.
-"""
+"""Fabricated-scenario / pretext detector."""
 
 from __future__ import annotations
 
@@ -46,15 +39,11 @@ def detect_pretext(text: str, **_) -> Signal:
         matched = [c for c in cues if c in norm]
         if matched:
             fired.append(scenario)
-            evidence.append(
-                f"{scenario.replace('_', ' ')} pretext: \"{matched[0]}\""
-            )
+            evidence.append(f"{scenario.replace('_', ' ')} pretext: \"{matched[0]}\"")
 
     if not fired:
         score = 0.0
     else:
-        # A recognizable pretext is a strong categorical tell; a second,
-        # blended pretext pushes it higher.
         score = 0.65 if len(fired) == 1 else 0.85
 
     return Signal(

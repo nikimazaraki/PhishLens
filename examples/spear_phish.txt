@@ -1,12 +1,12 @@
-Hi Niki,
+Hi Alex,
 
-As the new analyst on the Cyber Strategy team at Deloitte, I wanted to flag
+As the new analyst on the security team at Acme Corp, I wanted to flag
 that we have upgraded your account security following the company-wide policy
 update all employees agreed to last week. Please log in to confirm the update
-within 24 hours to avoid suspension of your Microsoft 365 mailbox.
+within 24 hours to avoid suspension of your mailbox.
 
-Sign in with Microsoft here to re-authenticate: https://microsoft.login-verify.ru/sso
+Log in to confirm here to re-authenticate: https://docusign.login-verify.ru/sso
 
-Thanks for your great work on the DORA playbooks.
+Thanks for your great work on the quarterly report.
 
 IT Support
