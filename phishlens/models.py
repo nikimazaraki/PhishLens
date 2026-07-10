@@ -31,6 +31,11 @@ class Signal:
     technique: str
     evidence: list[str] = field(default_factory=list)
     principles: set[str] = field(default_factory=set)
+    # False when the detector's required context (headers, from_header,
+    # attachments, send_hour, ...) was never supplied. Distinguishes "checked
+    # and found nothing" from "couldn't check" so a missing signal doesn't get
+    # averaged in as evidence of safety.
+    applicable: bool = True
 
     def __post_init__(self) -> None:
         self.score = max(0.0, min(1.0, float(self.score)))

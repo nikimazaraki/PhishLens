@@ -140,6 +140,12 @@ def detect_credential_harvest(text: str, **_) -> Signal:
         "session expired",
         "verify it's you",
         "verify it is you",
+        "confirm your login",
+        "confirm your account details",
+        "confirm your access",
+        "re-confirm your login",
+        "verify your login",
+        "provide your login details",
     ]
     matched = [c for c in cues if c in norm]
     score = 0.0 if not matched else min(0.85, 0.55 + 0.15 * (len(matched) - 1))
@@ -222,6 +228,7 @@ def detect_attachments(text: str, attachments: list[str] | None = None, **_) -> 
             weight=0.15,
             technique="Malicious attachment",
             evidence=[],
+            applicable=attachments is not None,
         )
 
     evidence: list[str] = []

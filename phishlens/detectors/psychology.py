@@ -113,6 +113,13 @@ PRINCIPLES: dict[str, list[str]] = {
         "account suspension",
         "time-sensitive",
         "deadline",
+        "immediate attention",
+        "immediate action",
+        "prompt action",
+        "without delay",
+        "at your earliest convenience",
+        "as a matter of urgency",
+        "before it is too late",
     ],
 }
 

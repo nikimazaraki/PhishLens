@@ -51,6 +51,7 @@ def detect_auth(text: str | None = None, headers: dict | None = None, **_) -> Si
             weight=0.20,
             technique="Sender authentication failure (SPF/DKIM/DMARC)",
             evidence=[],
+            applicable=False,
         )
     evidence: list[str] = []
     score = 0.0
@@ -97,6 +98,7 @@ def detect_sender(
             weight=0.18,
             technique="Sender spoofing / brand impersonation",
             evidence=[],
+            applicable=False,
         )
 
     display, email, domain = _parse_from(from_header)
@@ -185,6 +187,7 @@ def detect_lateral(
         weight=0.14,
         technique="Thread hijacking / lateral phishing",
         evidence=evidence,
+        applicable=bool(from_header),
     )
 
 
@@ -199,6 +202,7 @@ def detect_temporal(
             weight=0.05,
             technique="Send-time optimization",
             evidence=[],
+            applicable=False,
         )
     in_window = 9 <= int(send_hour) < 11
     return Signal(
