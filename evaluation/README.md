@@ -134,13 +134,3 @@ LLM-generated text for contrast, so the detector is correctly flagging
 AI-generated prose in both classes. That is a property of this dataset, not
 a flaw in the detector, so it was left unchanged.
 
-## Next step
-
-Run once, when V2 is ready for its official benchmark:
-
-```
-python evaluation/evaluation.py --confirm --decision threshold --threshold 23
-```
-
-The result will replace the placeholder V2 numbers above, and the repo will
-be tagged (for example `v2.0-benchmark`).
