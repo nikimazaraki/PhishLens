@@ -72,7 +72,7 @@ This HELD-OUT result is frozen as the official `v1.0-benchmark`. Later
 development is evaluated on DEV only and not re-run against this set, so it
 stays a clean test for whatever gets tagged next.
 
-## V2 (DEV-only, frozen, not yet confirmed on HELD-OUT)
+## V2 (DEV-only)
 
 Changes were found and validated on DEV only:
 
@@ -125,12 +125,4 @@ and FPR at once.
 
 V2 is frozen at config D. No further DEV tuning is planned before a
 HELD-OUT confirmation.
-
-### `authorship` left unchanged
-
-On DEV, `authorship` fires on about 61% of both phishing and legitimate
-emails, a coin flip. E-PhishLLM's legitimate emails are themselves clean,
-LLM-generated text for contrast, so the detector is correctly flagging
-AI-generated prose in both classes. That is a property of this dataset, not
-a flaw in the detector, so it was left unchanged.
 
