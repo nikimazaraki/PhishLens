@@ -132,6 +132,36 @@ def test_lateral_reply_from_freemail():
     assert s.score >= 0.6
 
 
+def test_metadata_detectors_marked_inapplicable_without_context():
+    """Missing headers/from_header/attachments means "unknown", not "clean"."""
+    assert detect_auth("body").applicable is False
+    assert detect_sender("body").applicable is False
+    assert detect_lateral("body").applicable is False
+    assert detect_attachments("body").applicable is False
+
+    assert detect_auth("body", headers={"spf": "pass"}).applicable is True
+    assert detect_sender("body", from_header="a@b.com").applicable is True
+
+
+def test_missing_metadata_is_not_treated_as_confirmed_clean():
+    """Not knowing the sender/auth/attachment status must score no lower than
+    an email that actively verified those fields as clean — otherwise a
+    missing header silently counts as evidence of safety."""
+    body = (
+        "Dear valued customer, act now: your account will be suspended "
+        "within 24 hours. Log in to confirm your credentials immediately."
+    )
+    body_only = analyze(body)
+    with_clean_metadata = analyze(
+        body,
+        from_header="ops@acme.com",
+        headers={"spf": "pass", "dkim": "pass", "dmarc": "pass"},
+        attachments=[],
+        send_hour=15,
+    )
+    assert body_only.risk_score >= with_clean_metadata.risk_score
+
+
 # --- end to end --------------------------------------------------------------
 
 

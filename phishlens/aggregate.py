@@ -69,8 +69,13 @@ def analyze(text: str, **context) -> AnalysisResult:
     signals = [d(text, **context) for d in DETECTORS]
     by_name = {s.name: s for s in signals}
 
-    total_weight = sum(s.weight for s in signals) or 1.0
-    base = sum(s.score * s.weight for s in signals) / total_weight
+    # Detectors whose context (headers, from_header, attachments, ...) was
+    # never supplied are excluded from the average rather than counted as a
+    # confirmed-clean vote — otherwise every email is penalized by however
+    # many metadata fields the caller happened not to pass in.
+    scored_signals = [s for s in signals if s.applicable]
+    total_weight = sum(s.weight for s in scored_signals) or 1.0
+    base = sum(s.score * s.weight for s in scored_signals) / total_weight
 
     stack_bonus, stack_note = _stacked_persuasion_bonus(
         by_name["manipulation"].principles

@@ -32,3 +32,6 @@ datasets/
 
 # Evaluation
 evaluation/results/
+
+#Claude code
+CLAUDE.md

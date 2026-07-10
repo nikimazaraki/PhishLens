@@ -61,6 +61,16 @@ SCENARIOS: dict[str, list[str]] = {
         "track your package",
         "redelivery",
     ],
+    "software_update": [
+        "software update",
+        "mandatory update",
+        "update your device",
+        "install the update",
+        "download the update",
+        "update file is attached",
+        "update file attached",
+        "required system update",
+    ],
 }
 
 

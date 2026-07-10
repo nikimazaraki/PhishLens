@@ -27,24 +27,13 @@ def detect_personalization(
         hits += 1
         evidence.append(f'references employer ("{recipient_employer}")')
 
-    osint_cues = [
-        "your recent",
-        "your paper",
-        "your project",
-        "your team",
-        "as the new",
-        "in your department",
-        "on your linkedin",
-        "your presentation",
-        "your role as",
-        "since you joined",
-    ]
-    cue_matches = [c for c in osint_cues if c in norm]
-    if cue_matches:
-        hits += 1
-        evidence.append(f'context-specific references: "{cue_matches[0]}"')
-
     score = 0.0 if hits == 0 else min(0.95, 1 - 0.5**hits)
+
+    # Only meaningful when there's a real recipient identity to check the
+    # text against — a generic phrase like "your project" appears constantly
+    # in ordinary business email and isn't verified OSINT residue, so it
+    # shouldn't count as this detector having "checked and found nothing".
+    applicable = bool(recipient_name or recipient_role or recipient_employer)
 
     return Signal(
         name="personalization",
@@ -53,4 +42,5 @@ def detect_personalization(
         weight=0.15,
         technique="Targeted personalization (OSINT residue)",
         evidence=evidence,
+        applicable=applicable,
     )
